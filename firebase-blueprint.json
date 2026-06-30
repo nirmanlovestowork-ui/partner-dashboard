@@ -11,7 +11,7 @@
         "assignee": { "type": "string", "enum": ["BIBHU", "ADMIN"], "description": "The person assigned to the task" },
         "created_at": { "type": "string", "format": "date-time", "description": "The time the task was created" }
       },
-      "required": ["task_name", "due_date", "status", "assignee"]
+      "required": ["task_name", "status", "assignee"]
     }
   },
   "firestore": {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { Task, Assignee } from './types';
 import TaskColumn from './components/TaskColumn';
 import TaskFormModal from './components/TaskFormModal';
@@ -55,7 +55,7 @@ export default function App() {
   };
 
   const handleSaveTask = async (taskData: Omit<Task, 'task_id'> | Task) => {
-    const firestoreDueDate = Timestamp.fromDate(new Date(taskData.due_date));
+    const firestoreDueDate = taskData.due_date ? Timestamp.fromDate(new Date(taskData.due_date)) : null;
     
     if ('task_id' in taskData && taskData.task_id) {
       await updateDoc(doc(db, 'tasks', taskData.task_id), {
@@ -90,10 +90,17 @@ export default function App() {
     }
   };
 
-  const bibhuTasks = tasks.filter(t => t.assignee === 'BIBHU').sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
-  const adminTasks = tasks.filter(t => t.assignee === 'ADMIN').sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+  const sortTasks = (a: Task, b: Task) => {
+    if (!a.due_date && !b.due_date) return 0;
+    if (!a.due_date) return 1;
+    if (!b.due_date) return -1;
+    return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+  };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const bibhuTasks = tasks.filter(t => t.assignee === 'BIBHU').sort(sortTasks);
+  const adminTasks = tasks.filter(t => t.assignee === 'ADMIN').sort(sortTasks);
+
+  const handleLogin = (e: FormEvent) => {
     e.preventDefault();
     if (password === 'Bibhu@2026') {
       setIsAuthenticated(true);

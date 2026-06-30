@@ -42,7 +42,7 @@ export default function TaskItem({ task, onEdit, onDelete, onToggle }: TaskItemP
     return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
   };
 
-  const isOverdue = new Date(task.due_date) < new Date() && !task.status;
+  const isOverdue = task.due_date ? new Date(task.due_date) < new Date() && !task.status : false;
 
   return (
     <motion.div
@@ -67,7 +67,7 @@ export default function TaskItem({ task, onEdit, onDelete, onToggle }: TaskItemP
               ? 'text-red-500' 
               : 'text-blue-500'
         }`}>
-          {isOverdue && !task.status ? `OVERDUE • ${formatTiming(task.due_date)}` : task.status ? 'COMPLETED' : formatTiming(task.due_date)}
+          {isOverdue && !task.status ? `OVERDUE • ${formatTiming(task.due_date!)}` : task.status ? 'COMPLETED' : task.due_date ? formatTiming(task.due_date) : 'NO DUE DATE'}
         </div>
         <div className={`text-lg font-semibold truncate ${
           task.status ? 'text-slate-500 line-through' : 'text-slate-800'

@@ -19,18 +19,20 @@ export default function TaskFormModal({ assignee, initialData, onSave, onClose }
     return new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
   };
   
+  const [hasDueDate, setHasDueDate] = useState(!!initialData?.due_date);
+  
   const [dueDate, setDueDate] = useState(
     initialData?.due_date ? new Date(new Date(initialData.due_date).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : getDefaultDateTime()
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !dueDate) return;
+    if (!title.trim() || (hasDueDate && !dueDate)) return;
 
     onSave({
       ...(initialData || {}),
       task_name: title.trim(),
-      due_date: new Date(dueDate).toISOString(),
+      due_date: hasDueDate ? new Date(dueDate).toISOString() : null,
       assignee,
       status: initialData?.status || false,
     } as Omit<Task, 'task_id'> | Task);
@@ -90,19 +92,44 @@ export default function TaskFormModal({ assignee, initialData, onSave, onClose }
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label htmlFor="dueDate" className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-              <CalendarIcon className="w-4 h-4 text-blue-500" />
-              Due Date & Time
-            </label>
-            <input
-              id="dueDate"
-              type="datetime-local"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all text-slate-800 font-medium"
-              required
-            />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label htmlFor="dueDate" className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <CalendarIcon className="w-4 h-4 text-blue-500" />
+                Due Date & Time
+              </label>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={hasDueDate}
+                onClick={() => setHasDueDate(!hasDueDate)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  hasDueDate ? 'bg-blue-600' : 'bg-slate-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    hasDueDate ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            {hasDueDate && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <input
+                  id="dueDate"
+                  type="datetime-local"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all text-slate-800 font-medium"
+                  required={hasDueDate}
+                />
+              </motion.div>
+            )}
           </div>
 
           <div className="pt-4 flex gap-3">
@@ -115,7 +142,7 @@ export default function TaskFormModal({ assignee, initialData, onSave, onClose }
             </button>
             <button
               type="submit"
-              disabled={!title.trim() || !dueDate}
+              disabled={!title.trim() || (hasDueDate && !dueDate)}
               className="flex-1 px-4 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-blue-600/20"
             >
               {initialData ? 'Save Changes' : 'Create Task'}
