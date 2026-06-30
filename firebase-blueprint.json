@@ -1,0 +1,23 @@
+{
+  "entities": {
+    "Task": {
+      "title": "Task",
+      "description": "A task in the dashboard",
+      "type": "object",
+      "properties": {
+        "task_name": { "type": "string", "description": "The title or description of the task" },
+        "due_date": { "type": "string", "format": "date-time", "description": "The due date and time of the task" },
+        "status": { "type": "boolean", "description": "Whether the task is completed or not" },
+        "assignee": { "type": "string", "enum": ["BIBHU", "ADMIN"], "description": "The person assigned to the task" },
+        "created_at": { "type": "string", "format": "date-time", "description": "The time the task was created" }
+      },
+      "required": ["task_name", "due_date", "status", "assignee"]
+    }
+  },
+  "firestore": {
+    "/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Tasks for the dashboard"
+    }
+  }
+}
