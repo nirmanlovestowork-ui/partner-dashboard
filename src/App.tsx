@@ -1,4 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Task, Assignee } from './types';
 import TaskColumn from './components/TaskColumn';
 import TaskFormModal from './components/TaskFormModal';
@@ -16,6 +17,7 @@ export default function App() {
   });
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'tasks'), (snapshot) => {
@@ -111,6 +113,12 @@ export default function App() {
     }
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setPassword('');
+    localStorage.removeItem('partner-dashboard-auth');
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 font-sans selection:bg-blue-200">
@@ -121,17 +129,26 @@ export default function App() {
           </div>
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setAuthError(false);
-                }}
-                placeholder="Password"
-                className={`w-full px-4 py-3.5 rounded-xl border ${authError ? 'border-red-300 focus:ring-red-100' : 'border-slate-200 focus:border-slate-400 focus:ring-slate-100'} bg-slate-50 focus:bg-white outline-none focus:ring-4 transition-all`}
-                autoFocus
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setAuthError(false);
+                  }}
+                  placeholder="Password"
+                  className={`w-full px-4 py-3.5 pr-12 rounded-xl border ${authError ? 'border-red-300 focus:ring-red-100' : 'border-slate-200 focus:border-slate-400 focus:ring-slate-100'} bg-slate-50 focus:bg-white outline-none focus:ring-4 transition-all`}
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-200"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
               {authError && <p className="text-red-500 text-xs mt-2.5 font-medium ml-1">Incorrect password.</p>}
             </div>
             <button
@@ -155,8 +172,16 @@ export default function App() {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-blue-900">Partner Dashboard</h1>
         </div>
-        <div className="text-sm font-medium text-slate-500 bg-blue-50 px-4 py-2 rounded-full hidden sm:block">
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+        <div className="flex items-center gap-4">
+          <div className="text-sm font-medium text-slate-500 bg-blue-50 px-4 py-2 rounded-full hidden sm:block">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
+          >
+            Logout
+          </button>
         </div>
       </header>
 
