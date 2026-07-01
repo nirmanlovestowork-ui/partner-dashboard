@@ -3,6 +3,7 @@ export type Assignee = 'BIBHU' | 'ADMIN';
 export interface Task {
   task_id: string;
   task_name: string;
+  description?: string;
   due_date: string | null;
   status: boolean;
   assignee: Assignee;

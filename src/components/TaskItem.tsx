@@ -1,7 +1,7 @@
 import { Task } from '../types';
-import { Check, Clock, MoreVertical, Pencil, Trash2, Calendar } from 'lucide-react';
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Check, Clock, Pencil, Trash2, Calendar, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
 
 interface TaskItemProps {
   key?: React.Key;
@@ -12,18 +12,7 @@ interface TaskItemProps {
 }
 
 export default function TaskItem({ task, onEdit, onDelete, onToggle }: TaskItemProps) {
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const formatTiming = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -51,83 +40,104 @@ export default function TaskItem({ task, onEdit, onDelete, onToggle }: TaskItemP
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -2 }}
-      className={`group relative p-5 rounded-2xl flex items-center transition-all duration-200 ${
+      className={`group relative p-5 rounded-2xl flex items-center transition-all duration-300 ${
         task.status 
-          ? 'bg-blue-100/30 border border-dashed border-blue-200 opacity-60' 
+          ? 'bg-slate-50/50 border border-slate-200 opacity-70' 
           : isOverdue 
-            ? 'bg-white shadow-md border border-slate-100 ring-2 ring-red-400 ring-offset-2' 
-            : 'bg-white shadow-sm border border-blue-50'
+            ? 'bg-white shadow-[0_4px_20px_-4px_rgba(239,68,68,0.1)] border border-red-200' 
+            : 'bg-white shadow-[0_2px_10px_-4px_rgba(0,86,210,0.1)] border border-slate-200/60 hover:shadow-[0_8px_30px_-4px_rgba(0,86,210,0.15)] hover:border-blue-200'
       }`}
     >
       <div className="flex-1 min-w-0 pr-4">
-        <div className={`text-xs font-bold uppercase tracking-tighter mb-1 ${
+        <div className={`text-xs font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5 ${
           task.status 
-            ? 'text-blue-400' 
+            ? 'text-slate-400' 
             : isOverdue 
               ? 'text-red-500' 
-              : 'text-blue-500'
+              : 'text-[#0056D2]'
         }`}>
-          {isOverdue && !task.status ? `OVERDUE • ${formatTiming(task.due_date!)}` : task.status ? 'COMPLETED' : task.due_date ? formatTiming(task.due_date) : 'NO DUE DATE'}
+          {isOverdue && !task.status ? (
+            <>
+              <Clock className="w-3.5 h-3.5" />
+              <span>OVERDUE • {formatTiming(task.due_date!)}</span>
+            </>
+          ) : task.status ? (
+            <>
+              <Check className="w-3.5 h-3.5" />
+              <span>COMPLETED</span>
+            </>
+          ) : task.due_date ? (
+            <>
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{formatTiming(task.due_date)}</span>
+            </>
+          ) : (
+            <span>NO DUE DATE</span>
+          )}
         </div>
-        <div className={`text-lg font-semibold truncate ${
-          task.status ? 'text-slate-500 line-through' : 'text-slate-800'
+        <div className={`text-lg font-semibold truncate transition-colors ${
+          task.status ? 'text-slate-400 line-through' : 'text-slate-800 group-hover:text-[#0056D2]'
         }`}>
           {task.task_name}
         </div>
+        {task.description && (
+          <div className={`text-sm mt-1.5 line-clamp-2 leading-relaxed ${
+            task.status ? 'text-slate-400/80' : 'text-slate-500 group-hover:text-slate-600'
+          }`}>
+            {task.description}
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-1 text-slate-300 hover:text-slate-500 rounded-lg transition-colors md:opacity-0 group-hover:opacity-100 focus:opacity-100"
-          >
-            <MoreVertical className="w-6 h-6" />
-          </button>
-
-          <AnimatePresence>
-            {showMenu && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                className="absolute right-0 mt-1 w-36 bg-white rounded-xl shadow-xl shadow-blue-900/5 border border-slate-100 overflow-hidden z-10 origin-top-right"
-              >
-                <button
-                  onClick={() => {
-                    setShowMenu(false);
-                    onEdit();
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                >
-                  <Pencil className="w-4 h-4" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => {
-                    setShowMenu(false);
-                    onDelete();
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-        
-        <button
-          onClick={onToggle}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-            task.status
-              ? 'bg-blue-600 text-white scale-100'
-              : 'border-2 border-blue-100 text-blue-500 hover:bg-blue-50 scale-95 hover:scale-100'
-          }`}
-        >
-          <Check className="w-5 h-5" strokeWidth={3} />
-        </button>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {isConfirmingDelete ? (
+          <div className="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-xl border border-red-100">
+            <span className="text-sm font-semibold text-red-600 mr-1">Delete?</span>
+            <button
+              onClick={onDelete}
+              className="p-1.5 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+              title="Confirm Delete"
+            >
+              <Check className="w-3.5 h-3.5" strokeWidth={3} />
+            </button>
+            <button
+              onClick={() => setIsConfirmingDelete(false)}
+              className="p-1.5 text-slate-500 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
+              title="Cancel"
+            >
+              <X className="w-3.5 h-3.5" strokeWidth={3} />
+            </button>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={onEdit}
+              className="p-2 text-slate-400 hover:text-black hover:bg-slate-100 rounded-xl transition-colors"
+              title="Edit Task"
+            >
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setIsConfirmingDelete(true)}
+              className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+              title="Delete Task"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+            
+            <button
+              onClick={onToggle}
+              className={`w-9 h-9 ml-1.5 rounded-full flex items-center justify-center transition-all duration-300 ${
+                task.status
+                  ? 'bg-green-600 text-white scale-100 shadow-sm shadow-green-600/30'
+                  : 'border-2 border-slate-200 text-slate-300 hover:text-green-600 hover:border-green-600 hover:bg-green-50 scale-95 hover:scale-100'
+              }`}
+              title={task.status ? "Mark as Pending" : "Mark as Completed"}
+            >
+              <Check className="w-5 h-5" strokeWidth={3} />
+            </button>
+          </>
+        )}
       </div>
     </motion.div>
   );

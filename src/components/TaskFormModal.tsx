@@ -12,6 +12,7 @@ interface TaskFormModalProps {
 
 export default function TaskFormModal({ assignee, initialData, onSave, onClose }: TaskFormModalProps) {
   const [title, setTitle] = useState(initialData?.task_name || '');
+  const [description, setDescription] = useState(initialData?.description || '');
   
   const getDefaultDateTime = () => {
     const now = new Date();
@@ -32,6 +33,7 @@ export default function TaskFormModal({ assignee, initialData, onSave, onClose }
     onSave({
       ...(initialData || {}),
       task_name: title.trim(),
+      description: description.trim(),
       due_date: hasDueDate ? new Date(dueDate).toISOString() : null,
       assignee,
       status: initialData?.status || false,
@@ -78,7 +80,7 @@ export default function TaskFormModal({ assignee, initialData, onSave, onClose }
           <div className="space-y-1.5">
             <label htmlFor="title" className="flex items-center gap-2 text-sm font-semibold text-slate-700">
               <Type className="w-4 h-4 text-blue-500" />
-              Task Description
+              Task Name
             </label>
             <input
               id="title"
@@ -89,6 +91,20 @@ export default function TaskFormModal({ assignee, initialData, onSave, onClose }
               className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all text-slate-800 placeholder:text-slate-400 font-medium"
               autoFocus
               required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="description" className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <Type className="w-4 h-4 text-blue-500" />
+              Task Description
+            </label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add more details about this task..."
+              className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all text-slate-800 placeholder:text-slate-400 font-medium resize-none h-24"
             />
           </div>
 

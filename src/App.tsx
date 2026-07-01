@@ -29,6 +29,7 @@ export default function App() {
         return {
           task_id: doc.id,
           task_name: data.task_name,
+          description: data.description || '',
           due_date: data.due_date?.toDate ? data.due_date.toDate().toISOString() : data.due_date,
           status: data.status,
           assignee: data.assignee as Assignee,
@@ -65,6 +66,7 @@ export default function App() {
     if ('task_id' in taskData && taskData.task_id) {
       await updateDoc(doc(db, 'tasks', taskData.task_id), {
         task_name: taskData.task_name,
+        description: taskData.description || '',
         due_date: firestoreDueDate,
         status: taskData.status,
         assignee: taskData.assignee
@@ -73,6 +75,7 @@ export default function App() {
       const newRef = doc(collection(db, 'tasks'));
       await setDoc(newRef, {
         task_name: taskData.task_name,
+        description: taskData.description || '',
         due_date: firestoreDueDate,
         status: taskData.status,
         assignee: taskData.assignee,
