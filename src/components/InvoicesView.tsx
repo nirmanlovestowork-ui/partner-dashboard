@@ -194,58 +194,84 @@ export default function InvoicesView() {
   if (viewState === 'list') {
     return (
       <div className="w-full h-full p-6 md:p-8 overflow-y-auto bg-slate-50">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              <FileText className="w-6 h-6 text-blue-600" />
-              Invoices
-            </h2>
+        <div className="max-w-6xl mx-auto space-y-8">
+          {/* Header Card */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 md:px-8 md:py-6 rounded-2xl border border-slate-200/60 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)]">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                <div className="p-2.5 bg-blue-50 text-[#0056D2] rounded-xl">
+                  <FileText className="w-6 h-6" />
+                </div>
+                Invoices
+              </h2>
+              <p className="text-slate-500 mt-1 text-sm font-medium">Manage and track your generated invoices</p>
+            </div>
             <button
               onClick={() => setViewState('create')}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-sm shadow-blue-600/20 transition-all active:scale-[0.98] flex items-center gap-2"
+              className="px-6 py-3.5 bg-[#0056D2] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md shadow-blue-600/20 transition-all active:scale-[0.98] flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
               Create Invoice
             </button>
           </div>
 
+          {/* Data Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    <th className="px-6 py-4 w-32">Invoice No</th>
-                    <th className="px-6 py-4 w-32">Date</th>
-                    <th className="px-6 py-4">Billed To</th>
-                    <th className="px-6 py-4 text-right w-32">Total</th>
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="px-6 py-5 w-48">Invoice No</th>
+                    <th className="px-6 py-5 w-48">Date</th>
+                    <th className="px-6 py-5">Billed To</th>
+                    <th className="px-6 py-5 text-right w-48">Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {invoices.map((invoice) => (
-                    <tr key={invoice.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 font-mono text-sm font-semibold rounded-lg border border-blue-100/50">
+                    <tr key={invoice.id} className="hover:bg-blue-50/30 transition-all group cursor-pointer">
+                      <td className="px-6 py-5">
+                        <span className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-700 font-mono text-sm font-semibold rounded-lg border border-slate-200/60 group-hover:bg-white group-hover:text-[#0056D2] group-hover:border-blue-200 group-hover:shadow-sm transition-all">
                           {invoice.invoice_number}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-slate-600 font-medium">
-                        {invoice.date}
+                      <td className="px-6 py-5 text-slate-600 font-medium">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
+                          {new Date(invoice.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-800">{invoice.party?.name}</div>
-                        <div className="text-sm text-slate-500 truncate max-w-sm">{invoice.party?.city}, {invoice.party?.state}</div>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-10 h-10 rounded-full bg-blue-50 text-[#0056D2] flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100/50 group-hover:bg-[#0056D2] group-hover:text-white transition-colors">
+                            {invoice.party?.name?.charAt(0)?.toUpperCase() || 'P'}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-800 text-base">{invoice.party?.name}</div>
+                            <div className="text-sm text-slate-500 truncate max-w-[280px]">{invoice.party?.city}, {invoice.party?.state}</div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="font-bold text-slate-800">₹{invoice.grand_total.toFixed(2)}</div>
+                      <td className="px-6 py-5 text-right">
+                        <div className="font-bold text-slate-800 text-lg group-hover:text-[#0056D2] transition-colors">₹{invoice.grand_total.toFixed(2)}</div>
                       </td>
                     </tr>
                   ))}
                   {invoices.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
-                        <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-lg font-medium text-slate-600">No invoices yet</p>
-                        <p className="text-sm">Click "Create Invoice" to make your first one.</p>
+                      <td colSpan={4} className="px-6 py-20 text-center">
+                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-slate-100 shadow-inner">
+                          <FileText className="w-10 h-10 text-slate-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2">No invoices yet</h3>
+                        <p className="text-slate-500 max-w-sm mx-auto mb-8 text-base">Create your first invoice to start tracking your billing and payments.</p>
+                        <button
+                          onClick={() => setViewState('create')}
+                          className="px-6 py-3 bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-[#0056D2] font-semibold rounded-xl shadow-sm transition-all inline-flex items-center gap-2"
+                        >
+                          <Plus className="w-5 h-5" />
+                          Create First Invoice
+                        </button>
                       </td>
                     </tr>
                   )}
