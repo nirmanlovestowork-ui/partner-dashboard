@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Eye, EyeOff, LayoutDashboard, ListTodo, Receipt } from 'lucide-react';
+import { Eye, EyeOff, LayoutDashboard, ListTodo, Receipt, Menu, X } from 'lucide-react';
 import { Task, Assignee } from './types';
 import TaskColumn from './components/TaskColumn';
 import TaskFormModal from './components/TaskFormModal';
@@ -19,6 +19,7 @@ export default function App() {
   const [authError, setAuthError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<'work-list' | 'invoices'>('work-list');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'tasks'), (snapshot) => {
@@ -200,14 +201,84 @@ export default function App() {
         </div>
       </aside>
 
+      {/* Mobile Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div 
+            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <aside className="relative flex w-full max-w-xs flex-col bg-white shadow-xl">
+            <div className="h-20 flex items-center justify-between px-6 border-b border-blue-100/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200">
+                  <span className="text-white font-bold tracking-tighter text-lg">PD</span>
+                </div>
+                <h1 className="text-xl font-bold tracking-tight text-blue-900">Dashboard</h1>
+              </div>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 -mr-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50 focus:outline-none"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+              <button
+                onClick={() => {
+                  setActiveTab('work-list');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                  activeTab === 'work-list' 
+                    ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <ListTodo className={`w-5 h-5 ${activeTab === 'work-list' ? 'text-blue-600' : 'text-slate-400'}`} />
+                Work List
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('invoices');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                  activeTab === 'invoices' 
+                    ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Receipt className={`w-5 h-5 ${activeTab === 'invoices' ? 'text-blue-600' : 'text-slate-400'}`} />
+                Invoices
+              </button>
+            </div>
+            <div className="p-4 border-t border-blue-100/50">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex justify-center text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200/60 hover:border-slate-300 hover:bg-slate-50 px-4 py-3 rounded-xl transition-colors shadow-sm"
+              >
+                Logout
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden w-full relative">
         <header className="h-20 bg-white/80 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:border-none border-b border-blue-100 flex items-center justify-between px-6 md:px-10 shrink-0 z-10">
           <div className="flex items-center gap-3 md:hidden">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200">
-              <span className="text-white font-bold tracking-tighter text-lg">PD</span>
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg focus:outline-none"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold tracking-tighter text-sm">PD</span>
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-blue-900">Partner Dashboard</h1>
+            <h1 className="text-lg font-bold tracking-tight text-blue-900">Partner Dashboard</h1>
           </div>
           <div className="hidden md:block">
             <h2 className="text-2xl font-bold tracking-tight text-blue-900">
