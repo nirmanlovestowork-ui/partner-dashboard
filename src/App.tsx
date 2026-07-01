@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, LayoutDashboard, ListTodo, Receipt } from 'lucide-react';
 import { Task, Assignee } from './types';
 import TaskColumn from './components/TaskColumn';
 import TaskFormModal from './components/TaskFormModal';
@@ -18,6 +18,7 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState<'work-list' | 'invoices'>('work-list');
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'tasks'), (snapshot) => {
@@ -104,7 +105,7 @@ export default function App() {
 
   const handleLogin = (e: FormEvent) => {
     e.preventDefault();
-    if (password === 'Bibhu@2026') {
+    if (password.trim() === 'Bibhu@2026') {
       setIsAuthenticated(true);
       localStorage.setItem('partner-dashboard-auth', 'true');
       setAuthError(false);
@@ -164,47 +165,103 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen w-full bg-blue-50 flex flex-col overflow-hidden font-sans text-slate-800 selection:bg-blue-200 selection:text-blue-900">
-      <header className="h-20 bg-white border-b border-blue-100 flex items-center justify-between px-6 md:px-10 shrink-0">
-        <div className="flex items-center gap-3">
+    <div className="h-screen w-full bg-blue-50 flex overflow-hidden font-sans text-slate-800 selection:bg-blue-200 selection:text-blue-900">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r border-blue-100 flex flex-col shrink-0 hidden md:flex z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <div className="h-20 flex items-center gap-3 px-6 border-b border-blue-100/50">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200">
             <span className="text-white font-bold tracking-tighter text-lg">PD</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-blue-900">Partner Dashboard</h1>
+          <h1 className="text-xl font-bold tracking-tight text-blue-900">Partner Dashboard</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-sm font-medium text-slate-500 bg-blue-50 px-4 py-2 rounded-full hidden sm:block">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
+        <div className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+          <button
+            onClick={() => setActiveTab('work-list')}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'work-list' 
+                ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }`}
           >
-            Logout
+            <ListTodo className={`w-5 h-5 ${activeTab === 'work-list' ? 'text-blue-600' : 'text-slate-400'}`} />
+            Work List
+          </button>
+          <button
+            onClick={() => setActiveTab('invoices')}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'invoices' 
+                ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }`}
+          >
+            <Receipt className={`w-5 h-5 ${activeTab === 'invoices' ? 'text-blue-600' : 'text-slate-400'}`} />
+            Invoices
           </button>
         </div>
-      </header>
+      </aside>
 
-      <main className="flex flex-1 w-full h-[calc(100vh-5rem)] overflow-hidden">
-        <div className="grid grid-cols-1 md:grid-cols-2 h-full w-full">
-          <TaskColumn
-            assignee="BIBHU"
-            tasks={bibhuTasks}
-            onAddTask={() => handleOpenModal('BIBHU')}
-            onEditTask={(task) => handleOpenModal('BIBHU', task)}
-            onDeleteTask={handleDeleteTask}
-            onToggleCompletion={handleToggleCompletion}
-          />
-          <TaskColumn
-            assignee="ADMIN"
-            tasks={adminTasks}
-            onAddTask={() => handleOpenModal('ADMIN')}
-            onEditTask={(task) => handleOpenModal('ADMIN', task)}
-            onDeleteTask={handleDeleteTask}
-            onToggleCompletion={handleToggleCompletion}
-          />
-        </div>
-      </main>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden w-full relative">
+        <header className="h-20 bg-white/80 backdrop-blur-md md:bg-transparent md:backdrop-blur-none md:border-none border-b border-blue-100 flex items-center justify-between px-6 md:px-10 shrink-0 z-10">
+          <div className="flex items-center gap-3 md:hidden">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200">
+              <span className="text-white font-bold tracking-tighter text-lg">PD</span>
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-blue-900">Partner Dashboard</h1>
+          </div>
+          <div className="hidden md:block">
+            <h2 className="text-2xl font-bold tracking-tight text-blue-900">
+              {activeTab === 'work-list' ? 'Work List' : 'Invoices'}
+            </h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium text-slate-500 bg-white px-4 py-2 rounded-full hidden sm:block border border-slate-200/60 shadow-sm">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </div>
+            <button 
+              onClick={handleLogout}
+              className="text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200/60 hover:border-slate-300 hover:bg-slate-50 px-4 py-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-sm"
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <main className="flex flex-1 w-full h-[calc(100vh-5rem)] overflow-hidden">
+          {activeTab === 'work-list' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 h-full w-full">
+              <TaskColumn
+                assignee="BIBHU"
+                tasks={bibhuTasks}
+                onAddTask={() => handleOpenModal('BIBHU')}
+                onEditTask={(task) => handleOpenModal('BIBHU', task)}
+                onDeleteTask={handleDeleteTask}
+                onToggleCompletion={handleToggleCompletion}
+              />
+              <TaskColumn
+                assignee="ADMIN"
+                tasks={adminTasks}
+                onAddTask={() => handleOpenModal('ADMIN')}
+                onEditTask={(task) => handleOpenModal('ADMIN', task)}
+                onDeleteTask={handleDeleteTask}
+                onToggleCompletion={handleToggleCompletion}
+              />
+            </div>
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center p-8">
+              <div className="w-full max-w-2xl bg-white/60 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm flex flex-col items-center">
+                <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                  <Receipt className="w-12 h-12 text-blue-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-3 tracking-tight">Invoices coming soon</h3>
+                <p className="text-slate-500 max-w-md text-lg">
+                  We're currently building the invoices feature. It will be available in a future update.
+                </p>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
 
       {isModalOpen && (
         <TaskFormModal
