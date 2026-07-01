@@ -5,19 +5,49 @@
       "description": "A task in the dashboard",
       "type": "object",
       "properties": {
-        "task_name": { "type": "string", "description": "The title or description of the task" },
-        "due_date": { "type": "string", "format": "date-time", "description": "The due date and time of the task" },
-        "status": { "type": "boolean", "description": "Whether the task is completed or not" },
-        "assignee": { "type": "string", "enum": ["BIBHU", "ADMIN"], "description": "The person assigned to the task" },
-        "created_at": { "type": "string", "format": "date-time", "description": "The time the task was created" }
-      },
-      "required": ["task_name", "status", "assignee"]
+        "task_name": { "type": "string" },
+        "due_date": { "type": "string", "format": "date-time" },
+        "status": { "type": "boolean" },
+        "assignee": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Party": {
+      "title": "Party",
+      "type": "object",
+      "properties": {}
+    },
+    "Service": {
+      "title": "Service",
+      "type": "object",
+      "properties": {}
+    },
+    "Counter": {
+      "title": "Counter",
+      "type": "object",
+      "properties": {}
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "type": "object",
+      "properties": {}
     }
   },
   "firestore": {
     "/tasks/{taskId}": {
-      "schema": { "$ref": "#/entities/Task" },
-      "description": "Tasks for the dashboard"
+      "schema": { "$ref": "#/entities/Task" }
+    },
+    "/parties/{partyId}": {
+      "schema": { "$ref": "#/entities/Party" }
+    },
+    "/services/{serviceId}": {
+      "schema": { "$ref": "#/entities/Service" }
+    },
+    "/counters/{counterId}": {
+      "schema": { "$ref": "#/entities/Counter" }
+    },
+    "/invoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/Invoice" }
     }
   }
 }

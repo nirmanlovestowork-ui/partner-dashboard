@@ -3,6 +3,7 @@ import { Eye, EyeOff, LayoutDashboard, ListTodo, Receipt, Menu, X } from 'lucide
 import { Task, Assignee } from './types';
 import TaskColumn from './components/TaskColumn';
 import TaskFormModal from './components/TaskFormModal';
+import InvoicesView from './components/InvoicesView';
 import { db } from './firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 
@@ -319,16 +320,8 @@ export default function App() {
               />
             </div>
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center p-8">
-              <div className="w-full max-w-2xl bg-white/60 backdrop-blur-sm border border-slate-200/60 rounded-3xl p-12 text-center shadow-sm flex flex-col items-center">
-                <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                  <Receipt className="w-12 h-12 text-blue-400" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-3 tracking-tight">Invoices coming soon</h3>
-                <p className="text-slate-500 max-w-md text-lg">
-                  We're currently building the invoices feature. It will be available in a future update.
-                </p>
-              </div>
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <InvoicesView />
             </div>
           )}
         </main>
