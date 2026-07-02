@@ -36,7 +36,10 @@ export default function ExpenseTrackerView() {
   // Form state
   const [type, setType] = useState<'Income' | 'Expense'>('Expense');
   const [amount, setAmount] = useState<string>('');
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState<string>(() => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  });
   const [category, setCategory] = useState<string>('Food & Dining');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [account, setAccount] = useState<TransactionAccount>('Bank Account');
@@ -87,13 +90,19 @@ export default function ExpenseTrackerView() {
         nextSerial = maxSerial + 1;
       }
       
+      const parts = date.split(/[-/]/).map(s => s.trim());
+      let formattedDate = date;
+      if (parts.length === 3) {
+        formattedDate = `${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}-${parts[2].length === 2 ? '20' + parts[2] : parts[2]}`;
+      }
+
       const docId = nextSerial.toString();
       await setDoc(doc(db, 'transactions', docId), {
         serial_number: nextSerial,
         bank_transaction_id: bankTxnId,
         type,
         amount: Number(amount),
-        date: new Date(date).toISOString(),
+        date: formattedDate,
         category: finalCategory,
         account,
         description,
@@ -108,7 +117,8 @@ export default function ExpenseTrackerView() {
       if (category === 'ADD_NEW') {
         setCategory(finalCategory);
       }
-      setDate(new Date().toISOString().split('T')[0]);
+      const today = new Date();
+      setDate(`${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`);
     } catch (error) {
       console.error('Error saving transaction:', error);
       alert('Failed to save transaction');
@@ -117,30 +127,71 @@ export default function ExpenseTrackerView() {
     }
   };
 
-  // Calculations for current month
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  
-  const currentMonthTransactions = transactions.filter(t => {
-    const d = new Date(t.date);
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-  });
+  // Date Parsing for calculations
+  const parseTransactionDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    
+    // Check if it's already an ISO string
+    if (dateStr.includes('T')) return new Date(dateStr);
+    
+    const parts = dateStr.split(/[-/]/).map(s => s.trim());
+    if (parts.length === 3) {
+      // Check if year is at the start (yyyy-mm-dd)
+      if (parts[0].length === 4) {
+        return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      }
+      // Check if year is at the end (dd-mm-yyyy or mm-dd-yyyy)
+      if (parts[2].length === 4 || parts[2].length === 2) {
+        let year = parseInt(parts[2]);
+        if (year < 100) year += 2000;
+        return new Date(year, parseInt(parts[1]) - 1, parseInt(parts[0]));
+      }
+    }
+    
+    // Fallback
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) return d;
+    return new Date();
+  };
 
-  const totalIncome = currentMonthTransactions
-    .filter(t => t.type === 'Income')
-    .reduce((sum, t) => sum + t.amount, 0);
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    if (dateStr.includes('T')) {
+      const d = new Date(dateStr);
+      return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+    }
+    const parts = dateStr.split(/[-/]/).map(s => s.trim());
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        // yyyy-mm-dd -> dd-mm-yyyy
+        return `${String(parts[2]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}-${parts[0]}`;
+      }
+      if (parts[2].length === 4 || parts[2].length === 2) {
+        // dd-mm-yyyy -> dd-mm-yyyy
+        let year = parseInt(parts[2]);
+        if (year < 100) year += 2000;
+        return `${String(parts[0]).padStart(2, '0')}-${String(parts[1]).padStart(2, '0')}-${year}`;
+      }
+    }
+    return dateStr;
+  };
 
-  const totalExpenses = currentMonthTransactions
-    .filter(t => t.type === 'Expense')
-    .reduce((sum, t) => sum + t.amount, 0);
+  // Calculate totals over all transactions
+  const totalIncome = transactions
+    .filter(t => t.type && t.type.toString().trim().toLowerCase() === 'income')
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+  const totalExpenses = transactions
+    .filter(t => t.type && t.type.toString().trim().toLowerCase() === 'expense')
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
   const netBalance = totalIncome - totalExpenses;
 
   // Chart data
-  const expensesByCategory = currentMonthTransactions
-    .filter(t => t.type === 'Expense')
+  const expensesByCategory = transactions
+    .filter(t => t.type && t.type.toString().trim().toLowerCase() === 'expense')
     .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
+      acc[t.category] = (acc[t.category] || 0) + (Number(t.amount) || 0);
       return acc;
     }, {} as Record<string, number>);
 
@@ -169,7 +220,7 @@ export default function ExpenseTrackerView() {
               </div>
               Expense Tracker
             </h2>
-            <p className="text-slate-500 mt-1 text-sm font-medium">Manage your finances for {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
+            <p className="text-slate-500 mt-1 text-sm font-medium">Manage your finances and track expenses.</p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -280,7 +331,7 @@ export default function ExpenseTrackerView() {
                         {txn.serial_number || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
-                        {new Date(txn.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {formatDisplayDate(txn.date)}
                       </td>
                       <td className="px-6 py-4">
                         <div className="font-semibold text-slate-800">{txn.description}</div>
@@ -300,8 +351,8 @@ export default function ExpenseTrackerView() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className={`font-bold ${txn.type === 'Income' ? 'text-green-600' : 'text-red-600'}`}>
-                          {txn.type === 'Income' ? '+' : '-'}₹{txn.amount.toLocaleString()}
+                        <div className={`font-bold ${txn.type && txn.type.toString().trim().toLowerCase() === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                          {txn.type && txn.type.toString().trim().toLowerCase() === 'income' ? '+' : '-'}₹{(Number(txn.amount) || 0).toLocaleString()}
                         </div>
                       </td>
                     </tr>
@@ -355,6 +406,7 @@ export default function ExpenseTrackerView() {
               <div className="p-6 overflow-y-auto custom-scrollbar space-y-5">
                 <div className="flex bg-slate-100 p-1 rounded-xl">
                   <button
+                    type="button"
                     onClick={() => setType('Expense')}
                     className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
                       type === 'Expense' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
@@ -363,6 +415,7 @@ export default function ExpenseTrackerView() {
                     Expense
                   </button>
                   <button
+                    type="button"
                     onClick={() => setType('Income')}
                     className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
                       type === 'Income' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
@@ -396,9 +449,10 @@ export default function ExpenseTrackerView() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Date</label>
+                    <label className="text-sm font-semibold text-slate-700">Date (DD/MM/YYYY)</label>
                     <input
-                      type="date"
+                      type="text"
+                      placeholder="DD/MM/YYYY"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium"

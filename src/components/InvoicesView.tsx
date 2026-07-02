@@ -5,12 +5,26 @@ import { Party, Service, InvoiceItem, Invoice } from '../types';
 import { Plus, Trash2, Search, Calendar, FileText, X, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const formatDisplayDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3 && parts[2].length === 4) {
+    return dateStr;
+  }
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+};
+
 export default function InvoicesView() {
   const [viewState, setViewState] = useState<'list' | 'create'>('list');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   
   const [invoiceNumber, setInvoiceNumber] = useState<number>(0);
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState<string>(() => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  });
   
   const [parties, setParties] = useState<Party[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -160,9 +174,12 @@ export default function InvoicesView() {
     setIsSaving(true);
     try {
       const newInvNumber = invoiceNumber + 1;
+      const [day, month, year] = date.split(/[-/]/);
+      const formattedDate = `${day}-${month}-${year}`;
+
       const invoiceData = {
         invoice_number: formatInvoiceNumber(invoiceNumber),
-        date,
+        date: formattedDate,
         party: selectedParty,
         items,
         subtotal,
@@ -238,7 +255,7 @@ export default function InvoicesView() {
                       <td className="px-6 py-5 text-slate-600 font-medium">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
-                          {new Date(invoice.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {formatDisplayDate(invoice.date)}
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -309,13 +326,14 @@ export default function InvoicesView() {
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Date</span>
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Date (DD/MM/YYYY)</span>
                 <div className="relative">
                   <input 
-                    type="date" 
+                    type="text" 
+                    placeholder="DD/MM/YYYY"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="pl-10 pr-4 py-2 w-36 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
