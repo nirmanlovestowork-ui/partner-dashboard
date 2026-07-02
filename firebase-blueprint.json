@@ -32,6 +32,31 @@
       "title": "Invoice",
       "type": "object",
       "properties": {}
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction",
+      "type": "object",
+      "properties": {
+        "serial_number": { "type": "number" },
+        "bank_transaction_id": { "type": "string" },
+        "type": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "category": { "type": "string" },
+        "account": { "type": "string" },
+        "description": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "TransactionCategory": {
+      "title": "Transaction Category",
+      "description": "Custom transaction category",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
@@ -49,6 +74,12 @@
     },
     "/invoices/{invoiceId}": {
       "schema": { "$ref": "#/entities/Invoice" }
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" }
+    },
+    "/transaction_categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/TransactionCategory" }
     }
   }
 }

@@ -16,5 +16,11 @@ service cloud.firestore {
     match /invoices/{invoiceId} {
       allow read, write: if true;
     }
+    match /transactions/{transactionId} {
+      allow read, write: if true;
+    }
+    match /transaction_categories/{categoryId} {
+      allow read, write: if true;
+    }
   }
 }

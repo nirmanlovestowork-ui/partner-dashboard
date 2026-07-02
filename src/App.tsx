@@ -1,9 +1,10 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Eye, EyeOff, LayoutDashboard, ListTodo, Receipt, Menu, X } from 'lucide-react';
+import { Eye, EyeOff, ListTodo, Receipt, Menu, X, Wallet } from 'lucide-react';
 import { Task, Assignee } from './types';
 import TaskColumn from './components/TaskColumn';
 import TaskFormModal from './components/TaskFormModal';
 import InvoicesView from './components/InvoicesView';
+import ExpenseTrackerView from './components/ExpenseTrackerView';
 import { db } from './firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 
@@ -19,7 +20,7 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<'work-list' | 'invoices'>('work-list');
+  const [activeTab, setActiveTab] = useState<'work-list' | 'invoices' | 'expenses'>('work-list');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -202,6 +203,17 @@ export default function App() {
             <Receipt className={`w-5 h-5 ${activeTab === 'invoices' ? 'text-blue-600' : 'text-slate-400'}`} />
             Invoices
           </button>
+          <button
+            onClick={() => setActiveTab('expenses')}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'expenses' 
+                ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }`}
+          >
+            <Wallet className={`w-5 h-5 ${activeTab === 'expenses' ? 'text-blue-600' : 'text-slate-400'}`} />
+            Expenses
+          </button>
         </div>
       </aside>
 
@@ -256,6 +268,20 @@ export default function App() {
                 <Receipt className={`w-5 h-5 ${activeTab === 'invoices' ? 'text-blue-600' : 'text-slate-400'}`} />
                 Invoices
               </button>
+              <button
+                onClick={() => {
+                  setActiveTab('expenses');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                  activeTab === 'expenses' 
+                    ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Wallet className={`w-5 h-5 ${activeTab === 'expenses' ? 'text-blue-600' : 'text-slate-400'}`} />
+                Expenses
+              </button>
             </div>
             <div className="p-4 border-t border-blue-100/50">
               <button 
@@ -286,7 +312,7 @@ export default function App() {
           </div>
           <div className="hidden md:block">
             <h2 className="text-2xl font-bold tracking-tight text-blue-900">
-              {activeTab === 'work-list' ? 'Work List' : 'Invoices'}
+              {activeTab === 'work-list' ? 'Work List' : activeTab === 'invoices' ? 'Invoices' : 'Expenses'}
             </h2>
           </div>
           <div className="flex items-center gap-4">
@@ -322,9 +348,13 @@ export default function App() {
                 onToggleCompletion={handleToggleCompletion}
               />
             </div>
-          ) : (
+          ) : activeTab === 'invoices' ? (
             <div className="w-full h-full flex flex-col overflow-hidden">
               <InvoicesView />
+            </div>
+          ) : (
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <ExpenseTrackerView />
             </div>
           )}
         </main>
