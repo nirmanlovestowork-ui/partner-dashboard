@@ -34,7 +34,7 @@ export default function ExpenseTrackerView() {
   const [isSaving, setIsSaving] = useState(false);
   
   // Form state
-  const [type, setType] = useState<'Income' | 'Expense'>('Expense');
+  const [type, setType] = useState<'Income' | 'Expense' | 'Transfer'>('Expense');
   const [amount, setAmount] = useState<string>('');
   const [date, setDate] = useState<string>(() => {
     const d = new Date();
@@ -43,6 +43,8 @@ export default function ExpenseTrackerView() {
   const [category, setCategory] = useState<string>('Food & Dining');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [account, setAccount] = useState<TransactionAccount>('Bank Account');
+  const [fromAccount, setFromAccount] = useState<TransactionAccount>('Bank Account');
+  const [toAccount, setToAccount] = useState<TransactionAccount>('Cash');
   const [description, setDescription] = useState<string>('');
   const [bankTxnId, setBankTxnId] = useState<string>('');
 
@@ -97,17 +99,33 @@ export default function ExpenseTrackerView() {
       }
 
       const docId = nextSerial.toString();
-      await setDoc(doc(db, 'transactions', docId), {
-        serial_number: nextSerial,
-        bank_transaction_id: bankTxnId,
-        type,
-        amount: Number(amount),
-        date: formattedDate,
-        category: finalCategory,
-        account,
-        description,
-        created_at: serverTimestamp()
-      });
+      
+      const numericAmount = Number(amount);
+      if (type === 'Transfer') {
+        await setDoc(doc(db, 'transactions', docId), {
+          serial_number: nextSerial,
+          bank_transaction_id: bankTxnId,
+          type,
+          amount: numericAmount,
+          date: formattedDate,
+          from_account: fromAccount,
+          to_account: toAccount,
+          description,
+          created_at: serverTimestamp()
+        });
+      } else {
+        await setDoc(doc(db, 'transactions', docId), {
+          serial_number: nextSerial,
+          bank_transaction_id: bankTxnId,
+          type,
+          amount: numericAmount,
+          date: formattedDate,
+          category: finalCategory,
+          account,
+          description,
+          created_at: serverTimestamp()
+        });
+      }
       
       setIsModalOpen(false);
       setAmount('');
@@ -231,6 +249,45 @@ export default function ExpenseTrackerView() {
           </button>
         </div>
 
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <PieChart className="w-5 h-5 text-blue-500" />
+            Expense Allocation
+          </h3>
+          <div className="flex-1 min-h-[300px] w-full flex items-center justify-center">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <RechartsPieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={90}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Amount']}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center text-slate-400">
+                <PieChart className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p>No expenses this month</p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex items-center gap-4">
@@ -264,49 +321,10 @@ export default function ExpenseTrackerView() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Chart */}
-          <div className="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col">
-            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-              <PieChart className="w-5 h-5 text-blue-500" />
-              Expense Allocation
-            </h3>
-            <div className="flex-1 min-h-[300px] w-full flex items-center justify-center">
-              {chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={70}
-                      outerRadius={90}
-                      paddingAngle={5}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Amount']}
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-center text-slate-400">
-                  <PieChart className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                  <p>No expenses this month</p>
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="flex flex-col gap-8">
 
           {/* Table */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden flex flex-col">
+          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-100">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                 Recent Transactions
@@ -340,20 +358,38 @@ export default function ExpenseTrackerView() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
-                          {txn.category}
-                        </span>
+                        {txn.type && txn.type.toString().trim().toLowerCase() === 'transfer' ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-500">
+                            Transfer
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
+                            {txn.category}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-sm text-slate-600">
-                          {getAccountIcon(txn.account)}
-                          {txn.account}
-                        </div>
+                        {txn.type && txn.type.toString().trim().toLowerCase() === 'transfer' ? (
+                          <div className="flex items-center gap-2 text-sm text-slate-600">
+                            {getAccountIcon(txn.from_account || 'Bank Account')} {txn.from_account} <ArrowDownRight className="w-3 h-3 mx-1 text-slate-400" /> {txn.to_account}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-sm text-slate-600">
+                            {getAccountIcon(txn.account || 'Bank Account')}
+                            {txn.account}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className={`font-bold ${txn.type && txn.type.toString().trim().toLowerCase() === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                          {txn.type && txn.type.toString().trim().toLowerCase() === 'income' ? '+' : '-'}₹{(Number(txn.amount) || 0).toLocaleString()}
-                        </div>
+                        {txn.type && txn.type.toString().trim().toLowerCase() === 'transfer' ? (
+                          <div className="font-bold text-slate-600">
+                            ₹{(Number(txn.amount) || 0).toLocaleString()}
+                          </div>
+                        ) : (
+                          <div className={`font-bold ${txn.type && txn.type.toString().trim().toLowerCase() === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                            {txn.type && txn.type.toString().trim().toLowerCase() === 'income' ? '+' : '-'}₹{(Number(txn.amount) || 0).toLocaleString()}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -423,6 +459,15 @@ export default function ExpenseTrackerView() {
                   >
                     Income
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setType('Transfer')}
+                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                      type === 'Transfer' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Transfer
+                  </button>
                 </div>
 
                 <div className="space-y-1.5">
@@ -458,20 +503,22 @@ export default function ExpenseTrackerView() {
                       className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium"
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Category</label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium appearance-none"
-                    >
-                      {ALL_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                      <option value="ADD_NEW">+ Add New Category...</option>
-                    </select>
-                  </div>
+                  {type !== 'Transfer' && (
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Category</label>
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium appearance-none"
+                      >
+                        {ALL_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                        <option value="ADD_NEW">+ Add New Category...</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
-                {category === 'ADD_NEW' && (
+                {type !== 'Transfer' && category === 'ADD_NEW' && (
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-slate-700">New Category Name</label>
                     <input
@@ -484,17 +531,55 @@ export default function ExpenseTrackerView() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Account</label>
-                    <select
-                      value={account}
-                      onChange={(e) => setAccount(e.target.value as TransactionAccount)}
-                      className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium appearance-none"
-                    >
-                      {ACCOUNTS.map(acc => <option key={acc} value={acc}>{acc}</option>)}
-                    </select>
+                {type === 'Transfer' ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">From Account</label>
+                      <select
+                        value={fromAccount}
+                        onChange={(e) => setFromAccount(e.target.value as TransactionAccount)}
+                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium appearance-none"
+                      >
+                        {ACCOUNTS.map(acc => <option key={acc} value={acc}>{acc}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">To Account</label>
+                      <select
+                        value={toAccount}
+                        onChange={(e) => setToAccount(e.target.value as TransactionAccount)}
+                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium appearance-none"
+                      >
+                        {ACCOUNTS.map(acc => <option key={acc} value={acc}>{acc}</option>)}
+                      </select>
+                    </div>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Account</label>
+                      <select
+                        value={account}
+                        onChange={(e) => setAccount(e.target.value as TransactionAccount)}
+                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium appearance-none"
+                      >
+                        {ACCOUNTS.map(acc => <option key={acc} value={acc}>{acc}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-semibold text-slate-700">Bank Txn ID <span className="text-slate-400 font-normal">(Optional)</span></label>
+                      <input
+                        type="text"
+                        value={bankTxnId}
+                        onChange={(e) => setBankTxnId(e.target.value)}
+                        placeholder="e.g. TXN12345"
+                        className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {type === 'Transfer' && (
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-slate-700">Bank Txn ID <span className="text-slate-400 font-normal">(Optional)</span></label>
                     <input
@@ -505,7 +590,7 @@ export default function ExpenseTrackerView() {
                       className="w-full px-4 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-mono text-sm"
                     />
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="p-6 border-t border-slate-100 bg-slate-50/50">

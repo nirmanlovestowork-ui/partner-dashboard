@@ -45,7 +45,7 @@ export interface Invoice {
   grand_total: number;
 }
 
-export type TransactionType = 'Income' | 'Expense';
+export type TransactionType = 'Income' | 'Expense' | 'Transfer';
 export type TransactionCategory = 'Food & Dining' | 'Groceries' | 'Fitness' | 'Software & Tools' | 'Education' | 'Utilities' | 'Miscellaneous' | 'Salary' | 'Freelance' | 'Other';
 export type TransactionAccount = 'Bank Account' | 'Cash' | 'Credit Card';
 
@@ -56,7 +56,9 @@ export interface Transaction {
   type: TransactionType;
   amount: number;
   date: string; // ISO string representing Firestore Timestamp
-  category: string;
-  account: TransactionAccount;
+  category?: string;
+  account?: TransactionAccount;
+  from_account?: TransactionAccount;
+  to_account?: TransactionAccount;
   description: string;
 }

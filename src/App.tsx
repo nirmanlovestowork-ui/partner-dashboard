@@ -1,10 +1,11 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Eye, EyeOff, ListTodo, Receipt, Menu, X, Wallet } from 'lucide-react';
+import { Eye, EyeOff, ListTodo, Receipt, Menu, X, Wallet, Search } from 'lucide-react';
 import { Task, Assignee } from './types';
 import TaskColumn from './components/TaskColumn';
 import TaskFormModal from './components/TaskFormModal';
 import InvoicesView from './components/InvoicesView';
 import ExpenseTrackerView from './components/ExpenseTrackerView';
+import { GSTINLookupView } from './components/GSTINLookupView';
 import { db } from './firebase';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 
@@ -20,7 +21,7 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<'work-list' | 'invoices' | 'expenses'>('work-list');
+  const [activeTab, setActiveTab] = useState<'work-list' | 'invoices' | 'expenses' | 'gstin-lookup'>('work-list');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -214,6 +215,17 @@ export default function App() {
             <Wallet className={`w-5 h-5 ${activeTab === 'expenses' ? 'text-blue-600' : 'text-slate-400'}`} />
             Expenses
           </button>
+          <button
+            onClick={() => setActiveTab('gstin-lookup')}
+            className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'gstin-lookup' 
+                ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }`}
+          >
+            <Search className={`w-5 h-5 ${activeTab === 'gstin-lookup' ? 'text-blue-600' : 'text-slate-400'}`} />
+            GSTIN Lookup
+          </button>
         </div>
       </aside>
 
@@ -282,6 +294,20 @@ export default function App() {
                 <Wallet className={`w-5 h-5 ${activeTab === 'expenses' ? 'text-blue-600' : 'text-slate-400'}`} />
                 Expenses
               </button>
+              <button
+                onClick={() => {
+                  setActiveTab('gstin-lookup');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all ${
+                  activeTab === 'gstin-lookup' 
+                    ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Search className={`w-5 h-5 ${activeTab === 'gstin-lookup' ? 'text-blue-600' : 'text-slate-400'}`} />
+                GSTIN Lookup
+              </button>
             </div>
             <div className="p-4 border-t border-blue-100/50">
               <button 
@@ -312,7 +338,7 @@ export default function App() {
           </div>
           <div className="hidden md:block">
             <h2 className="text-2xl font-bold tracking-tight text-blue-900">
-              {activeTab === 'work-list' ? 'Work List' : activeTab === 'invoices' ? 'Invoices' : 'Expenses'}
+              {activeTab === 'work-list' ? 'Work List' : activeTab === 'invoices' ? 'Invoices' : activeTab === 'expenses' ? 'Expenses' : 'GSTIN Lookup'}
             </h2>
           </div>
           <div className="flex items-center gap-4">
@@ -352,9 +378,13 @@ export default function App() {
             <div className="w-full h-full flex flex-col overflow-hidden">
               <InvoicesView />
             </div>
-          ) : (
+          ) : activeTab === 'expenses' ? (
             <div className="w-full h-full flex flex-col overflow-hidden">
               <ExpenseTrackerView />
+            </div>
+          ) : (
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              <GSTINLookupView />
             </div>
           )}
         </main>
